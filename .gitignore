@@ -23,3 +23,9 @@ verdiLog
 *.conf
 
 *.fsdb
+
+docs
+
+*.daidir
+
+simv_regs

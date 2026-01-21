@@ -113,11 +113,38 @@ cov_view:
 	@echo "but Verdi T-2022.06-SP2 is available. Use 'make report' for HTML reports."
 	verdi -cov -covdir cov.vdb &
 
+# ============================================================================
+# Phase 1: Register Test (Non-UVM directed test)
+# ============================================================================
+
+# Register test source files
+REG_RTL_SOURCES = dut/fifo_regs.sv dut/fifo_core.sv dut/fifo_top.sv
+REG_TB_SOURCES = tb/tb_fifo_regs.sv
+
+# Compile register test
+compile_regs:
+	$(VCS) -sverilog -debug_access+all -full64 -timescale=1ns/1ps \
+	       $(REG_RTL_SOURCES) $(REG_TB_SOURCES) -o simv_regs
+
+# Run register test
+run_regs: compile_regs
+	./simv_regs
+	@echo ""
+	@echo "============================================================"
+	@echo "Register test complete! Check output above for PASS/FAIL"
+	@echo "============================================================"
+
+# Run register test with waves
+run_regs_waves: compile_regs
+	./simv_regs
+	@echo "Waveform saved to tb_fifo_regs.vcd"
+
 # Clean generated files
 clean:
 	rm -rf $(SIMV) $(SIMV).daidir csrc ucli.key vc_hdrs.h $(VCD)
 	rm -rf *.log *.fsdb cov.vdb simv.vdb AN.DB novas.*
 	rm -rf cov_report urgReport
+	rm -rf simv_regs simv_regs.daidir tb_fifo_regs.vcd
 
 # Clean everything including VCS work directories
 cleanall: clean
@@ -150,12 +177,18 @@ help:
 	@echo "  make cleanall     - Remove all VCS generated files"
 	@echo "  make help         - Show this help message"
 	@echo ""
+	@echo "Phase 1 Register Test (Non-UVM):"
+	@echo "  make run_regs       - Compile and run register directed test"
+	@echo "  make compile_regs   - Compile register test only"
+	@echo "  make run_regs_waves - Run register test with VCD dump"
+	@echo ""
 	@echo "Variables:"
 	@echo "  TEST=<name>       - Specify test name (default: fifo_test)"
 	@echo "  UVM_VERBOSITY=X   - Set verbosity (UVM_LOW/MEDIUM/HIGH/DEBUG)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make run TEST=fifo_test UVM_VERBOSITY=UVM_HIGH"
+	@echo "  make run_regs  # Run Phase 1 register sanity test"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves

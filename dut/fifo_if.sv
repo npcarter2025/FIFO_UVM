@@ -1,5 +1,12 @@
 
-interface fifo_if#(parameter WIDTH=8, DEPTH=16)(input logic clk, input logic rst);
+interface fifo_if #(
+    parameter WIDTH=8, 
+    DEPTH=16
+)(   
+    input logic clk, 
+    input logic rst
+);
+
     bit                 is_write;
     logic               sel;
 

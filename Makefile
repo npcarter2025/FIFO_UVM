@@ -10,9 +10,9 @@ SIMV = simv
 UVM_HOME ?= $(VCS_HOME)/etc/uvm-1.2
 UVM_VERBOSITY ?= UVM_MEDIUM
 
-# Source files
-RTL_SOURCES = fifo.sv
-TB_SOURCES = fifo_if.sv fifo_pkg.sv tb_top.sv
+# Source files (with paths)
+RTL_SOURCES = dut/fifo.sv
+TB_SOURCES = dut/fifo_if.sv tests/fifo_pkg.sv tb/tb_top.sv
 
 ALL_SOURCES = $(RTL_SOURCES) $(TB_SOURCES)
 

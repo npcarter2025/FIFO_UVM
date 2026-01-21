@@ -1,0 +1,15 @@
+*.vdb
+
+*.vcd
+
+*.vpd
+
+*.log
+ucli.key
+csrc
+simv.daidir
+simv
+vc_hdrs.h
+verdi_config_file
+
+

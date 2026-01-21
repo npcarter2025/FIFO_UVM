@@ -55,7 +55,7 @@ module tb_top;
         $dumpvars(0, tb_top);
 
         // Run the test
-        run_test("fifo_test");
+        run_test(); // Need to use +UVM_TESTNAME=$(TESTNAME)
     end
 
 endmodule

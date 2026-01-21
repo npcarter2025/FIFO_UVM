@@ -1,8 +1,8 @@
-`ifndef FIFO_TEST_SV 
-`define FIFO_TEST_SV
+`ifndef FIFO_OVERFLOW_TEST_SV
+`define FIFO_OVERFLOW_TEST_SV
 
-class fifo_test extends uvm_test;
-    `uvm_component_utils(fifo_test)
+class fifo_overflow_test extends uvm_test;
+    `uvm_component_utils(fifo_overflow_test)
 
     fifo_env env;
 
@@ -16,17 +16,20 @@ class fifo_test extends uvm_test;
     endfunction
 
     virtual task run_phase(uvm_phase phase);
-
-        fifo_base_sequence seq;
-        seq = fifo_base_sequence::type_id::create("seq");
+        fifo_overflow_sequence seq;
+        seq = fifo_overflow_sequence::type_id::create("seq");
 
         phase.raise_objection(this);
 
         seq.start(env.agt.sqr);
 
         phase.drop_objection(this);
+
+
     endtask
+
 
 endclass
 
-`endif 
+`endif
+

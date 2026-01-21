@@ -17,7 +17,24 @@ TB_SOURCES = fifo_if.sv fifo_pkg.sv tb_top.sv
 ALL_SOURCES = $(RTL_SOURCES) $(TB_SOURCES)
 
 # Test name (can override with: make run TEST=fifo_test)
-TEST ?= fifo_test
+BASICTEST = 0
+OVERFLOWTEST = 0
+ALLTESTS = 1
+
+ifeq ($(BASICTEST), 1)
+	TEST ?= fifo_test
+else
+	ifeq ($(OVERFLOWTEST), 1)
+
+		TEST ?= fifo_overflow_test
+	else 
+
+		TEST ?= fifo_test
+
+		
+	endif
+endif
+
 
 # VCD dump file
 VCD = dump.vcd
@@ -45,8 +62,12 @@ RUN_FLAGS = +UVM_TESTNAME=$(TEST) \
 # Targets
 # ============================================================================
 
-# Default target
+# Default target - use run_all if ALLTESTS=1, otherwise use run
+ifeq ($(ALLTESTS), 1)
+all: compile run_all
+else
 all: compile run
+endif
 
 # Compile the design
 compile:
@@ -54,7 +75,23 @@ compile:
 
 # Run simulation
 run: compile
-	./$(SIMV) $(RUN_FLAGS)
+	./$(SIMV) $(RUN_FLAGS) -cm line+cond+branch+tgl+assert
+
+
+run_all: compile
+	@echo "============================================================"
+	@echo "Running fifo_test..."
+	@echo "============================================================"
+	./$(SIMV) +UVM_TESTNAME=fifo_test +UVM_VERBOSITY=$(UVM_VERBOSITY) -cm line+cond+branch+tgl+assert -cm_dir cov.vdb -cm_name fifo_test_cov || true
+	@echo ""
+	@echo "============================================================"
+	@echo "Running fifo_overflow_test..."
+	@echo "============================================================"
+	./$(SIMV) +UVM_TESTNAME=fifo_overflow_test +UVM_VERBOSITY=$(UVM_VERBOSITY) -cm line+cond+branch+tgl+assert -cm_dir cov.vdb -cm_name fifo_overflow_test_cov || true
+	@echo ""
+	@echo "============================================================"
+	@echo "All tests finished!"
+	@echo "============================================================"
 
 # Run simulation with waves
 run_waves: compile
@@ -68,8 +105,12 @@ gui: compile
 report: run
 	urg -dir cov.vdb -format both -report cov_report
 
-# View coverage in Verdi
+# View coverage in Verdi (Note: requires Verdi version matching VCS version)
+# Current VCS is T-2022.06-SP2-9, but Verdi is T-2022.06-SP2 (incompatible)
+# Use 'make report' for HTML coverage reports instead
 cov_view:
+	@echo "Warning: Verdi version mismatch. VDB created with VCS T-2022.06-SP2-9"
+	@echo "but Verdi T-2022.06-SP2 is available. Use 'make report' for HTML reports."
 	verdi -cov -covdir cov.vdb &
 
 # Clean generated files
@@ -81,6 +122,15 @@ clean:
 # Clean everything including VCS work directories
 cleanall: clean
 	rm -rf DVEfiles simv.daidir .vcs_lib_lock .inter.vpd.uvm
+
+html: 
+	@echo "Starting HTTP server on port 8000..."
+	@cd cov_report && python3 -m http.server 8000 &
+	@sleep 2
+	@echo "Opening Firefox..."
+	@if [ -z "$$DISPLAY" ]; then export DISPLAY=:0.0; fi; \
+	firefox http://localhost:8000/dashboard.html &
+	@echo "Server running. Press Ctrl+C to stop, or run: pkill -f 'python3 -m http.server 8000'"
 
 # Help target
 help:
@@ -108,4 +158,4 @@ help:
 	@echo "  make run TEST=fifo_test UVM_VERBOSITY=UVM_HIGH"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html

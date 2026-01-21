@@ -9,6 +9,8 @@ class fifo_env extends uvm_env;
     fifo_agent      agt;
     fifo_scoreboard scb;
 
+    fifo_coverage cov;
+
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -18,6 +20,7 @@ class fifo_env extends uvm_env;
         super.build_phase(phase);
         agt = fifo_agent::type_id::create("agt", this);
         scb = fifo_scoreboard::type_id::create("scb", this);
+        cov = fifo_coverage::type_id::create("cov", this);
 
     endfunction
 
@@ -25,6 +28,8 @@ class fifo_env extends uvm_env;
         super.connect_phase(phase);
 
         agt.mon.item_collected_port.connect(scb.item_collected_export);
+
+        agt.mon.item_collected_port.connect(cov.analysis_export);
 
     endfunction
 

@@ -12,4 +12,14 @@ simv
 vc_hdrs.h
 verdi_config_file
 
+cov_report
 
+vdCovLog
+verdiLog
+
+*.rc
+
+
+*.conf
+
+*.fsdb

@@ -9,8 +9,12 @@ package fifo_pkg;
     `include "fifo_monitor.svh"
     `include "fifo_scoreboard.svh"
     `include "fifo_agent.svh"
+    `include "fifo_coverage.svh"
     `include "fifo_env.svh"
     `include "fifo_base_sequence.svh"
+    `include "fifo_overflow_sequence.svh"
     `include "fifo_test.sv"
+    `include "fifo_overflow_test.sv"
+
 
 endpackage

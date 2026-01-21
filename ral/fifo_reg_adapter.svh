@@ -19,7 +19,7 @@ class fifo_reg_adapter extends uvm_reg_adapter;
         
         // Configure adapter behavior
         supports_byte_enable = 0;  // No byte enables on this bus
-        provides_responses   = 1;  // Driver provides response items
+        provides_responses   = 0;  // Item is modified in-place by driver
     endfunction
 
     //-------------------------------------------------------------------------

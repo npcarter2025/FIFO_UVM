@@ -196,6 +196,45 @@ compile_ral:
 	@echo "RAL model compiled successfully!"
 	@echo "============================================================"
 
+# ============================================================================
+# Phase 4: RAL Integration Test
+# ============================================================================
+
+# RAL integration test files
+RAL_INT_RTL = dut/fifo_regs.sv dut/fifo_core.sv dut/fifo_top.sv
+RAL_INT_IF  = reg_agent/reg_if.sv dut/fifo_if.sv
+RAL_INT_PKG = reg_agent/reg_pkg.sv ral/fifo_ral_pkg.sv tests/fifo_ral_test_pkg.sv
+RAL_INT_TB  = tb/tb_fifo_ral.sv
+
+RAL_TEST ?= fifo_ral_sanity_test
+
+# VCS flags for RAL integration test
+RAL_VCS_FLAGS = -sverilog \
+                -debug_access+all \
+                -full64 \
+                -timescale=1ns/1ps \
+                -ntb_opts uvm-1.2 \
+                +incdir+$(UVM_HOME)/src \
+                +incdir+. \
+                +incdir+reg_agent \
+                +incdir+ral
+
+# Compile RAL integration test
+compile_ral_test:
+	$(VCS) $(RAL_VCS_FLAGS) $(RAL_INT_RTL) $(RAL_INT_IF) $(RAL_INT_PKG) $(RAL_INT_TB) -o simv_ral_test
+
+# Run RAL integration test
+run_ral_test: compile_ral_test
+	./simv_ral_test +UVM_TESTNAME=$(RAL_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY)
+	@echo ""
+	@echo "============================================================"
+	@echo "RAL integration test complete!"
+	@echo "============================================================"
+
+# Run RAL reset test
+run_ral_reset: compile_ral_test
+	./simv_ral_test +UVM_TESTNAME=fifo_ral_reset_test +UVM_VERBOSITY=$(UVM_VERBOSITY)
+
 # Clean generated files
 clean:
 	rm -rf $(SIMV) $(SIMV).daidir csrc ucli.key vc_hdrs.h $(VCD)
@@ -204,6 +243,7 @@ clean:
 	rm -rf simv_regs simv_regs.daidir tb_fifo_regs.vcd
 	rm -rf simv_reg_agent simv_reg_agent.daidir tb_reg_agent.vcd
 	rm -rf simv_ral_check simv_ral_check.daidir
+	rm -rf simv_ral_test simv_ral_test.daidir tb_fifo_ral.vcd
 
 # Clean everything including VCS work directories
 cleanall: clean
@@ -248,6 +288,11 @@ help:
 	@echo "Phase 3 RAL Model:"
 	@echo "  make compile_ral       - Compile RAL model (verification)"
 	@echo ""
+	@echo "Phase 4 RAL Integration Test:"
+	@echo "  make run_ral_test      - Run RAL integration test (sanity)"
+	@echo "  make run_ral_reset     - Run RAL reset value test"
+	@echo "  make compile_ral_test  - Compile RAL integration test only"
+	@echo ""
 	@echo "Variables:
 	@echo "  TEST=<name>       - Specify test name (default: fifo_test)"
 	@echo "  UVM_VERBOSITY=X   - Set verbosity (UVM_LOW/MEDIUM/HIGH/DEBUG)"
@@ -257,4 +302,4 @@ help:
 	@echo "  make run_regs  # Run Phase 1 register sanity test"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent compile_ral
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent compile_ral compile_ral_test run_ral_test run_ral_reset

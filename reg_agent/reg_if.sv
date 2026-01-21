@@ -11,12 +11,12 @@ interface reg_if #(
     input logic rst_n
 );
 
-    // Register bus signals
-    logic [ADDR_W-1:0]  addr;
-    logic [DATA_W-1:0]  wdata;
+    // Register bus signals (initialized to avoid X during reset)
+    logic [ADDR_W-1:0]  addr  = '0;
+    logic [DATA_W-1:0]  wdata = '0;
     logic [DATA_W-1:0]  rdata;
-    logic               wen;
-    logic               ren;
+    logic               wen   = 1'b0;
+    logic               ren   = 1'b0;
     logic               ready;
 
     //-------------------------------------------------------------------------

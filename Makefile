@@ -172,6 +172,30 @@ run_reg_agent: compile_reg_agent
 	@echo "Register agent test complete!"
 	@echo "============================================================"
 
+# ============================================================================
+# Phase 3: RAL Model Compilation Check
+# ============================================================================
+
+# RAL source files
+RAL_SOURCES = ral/fifo_ral_pkg.sv
+
+# Compile RAL model (checks that it compiles correctly)
+compile_ral:
+	$(VCS) -sverilog \
+	       -full64 \
+	       -timescale=1ns/1ps \
+	       -ntb_opts uvm-1.2 \
+	       +incdir+$(UVM_HOME)/src \
+	       +incdir+reg_agent \
+	       +incdir+ral \
+	       $(REG_AGENT_IF) $(REG_AGENT_PKG) $(RAL_SOURCES) \
+	       -top fifo_ral_pkg \
+	       -o simv_ral_check
+	@echo ""
+	@echo "============================================================"
+	@echo "RAL model compiled successfully!"
+	@echo "============================================================"
+
 # Clean generated files
 clean:
 	rm -rf $(SIMV) $(SIMV).daidir csrc ucli.key vc_hdrs.h $(VCD)
@@ -179,6 +203,7 @@ clean:
 	rm -rf cov_report urgReport
 	rm -rf simv_regs simv_regs.daidir tb_fifo_regs.vcd
 	rm -rf simv_reg_agent simv_reg_agent.daidir tb_reg_agent.vcd
+	rm -rf simv_ral_check simv_ral_check.daidir
 
 # Clean everything including VCS work directories
 cleanall: clean
@@ -220,6 +245,9 @@ help:
 	@echo "  make run_reg_agent     - Compile and run UVM register agent test"
 	@echo "  make compile_reg_agent - Compile UVM register agent test only"
 	@echo ""
+	@echo "Phase 3 RAL Model:"
+	@echo "  make compile_ral       - Compile RAL model (verification)"
+	@echo ""
 	@echo "Variables:
 	@echo "  TEST=<name>       - Specify test name (default: fifo_test)"
 	@echo "  UVM_VERBOSITY=X   - Set verbosity (UVM_LOW/MEDIUM/HIGH/DEBUG)"
@@ -229,4 +257,4 @@ help:
 	@echo "  make run_regs  # Run Phase 1 register sanity test"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent compile_ral

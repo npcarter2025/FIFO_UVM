@@ -31,3 +31,5 @@ docs
 simv_regs
 
 simv_reg_agent
+
+simv_ral_check

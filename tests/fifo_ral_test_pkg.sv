@@ -35,6 +35,9 @@ package fifo_ral_test_pkg;
     // RAL-integrated environment and sequences
     //-------------------------------------------------------------------------
     
+    // Virtual sequencer (must be before environment)
+    `include "env/fifo_virtual_sequencer.svh"
+
     // Environment with RAL
     `include "env/fifo_ral_env.svh"
 

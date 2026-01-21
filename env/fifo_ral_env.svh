@@ -5,6 +5,7 @@
 // Class: fifo_ral_env
 // Description: UVM environment with RAL integration
 //              Includes both FIFO data agent and register agent with RAL
+//              Plus virtual sequencer for coordinated sequences
 //-----------------------------------------------------------------------------
 
 class fifo_ral_env extends uvm_env;
@@ -26,6 +27,9 @@ class fifo_ral_env extends uvm_env;
     // RAL model (Phase 3)
     fifo_reg_block  reg_block;
     fifo_reg_adapter reg_adapter;
+
+    // Virtual sequencer (Phase 5) - coordinates both agents
+    fifo_virtual_sequencer  v_sqr;
 
     //-------------------------------------------------------------------------
     // Constructor
@@ -55,6 +59,9 @@ class fifo_ral_env extends uvm_env;
         // Create RAL adapter
         reg_adapter = fifo_reg_adapter::type_id::create("reg_adapter");
 
+        // Create virtual sequencer
+        v_sqr = fifo_virtual_sequencer::type_id::create("v_sqr", this);
+
     endfunction
 
     //-------------------------------------------------------------------------
@@ -74,7 +81,12 @@ class fifo_ral_env extends uvm_env;
         // Set auto-predict mode (update RAL mirror after each transaction)
         reg_block.reg_map.set_auto_predict(1);
 
-        `uvm_info(get_type_name(), "RAL connected to register agent", UVM_MEDIUM)
+        // Connect virtual sequencer handles to agent sequencers
+        v_sqr.fifo_sqr  = fifo_agt.sqr;
+        v_sqr.reg_sqr   = reg_agt.sqr;
+        v_sqr.reg_block = reg_block;
+
+        `uvm_info(get_type_name(), "RAL and virtual sequencer connected", UVM_MEDIUM)
     endfunction
 
     //-------------------------------------------------------------------------
@@ -84,6 +96,11 @@ class fifo_ral_env extends uvm_env;
     // Get the register block handle
     function fifo_reg_block get_reg_block();
         return reg_block;
+    endfunction
+
+    // Get the virtual sequencer handle
+    function fifo_virtual_sequencer get_virtual_sequencer();
+        return v_sqr;
     endfunction
 
 endclass

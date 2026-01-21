@@ -29,3 +29,5 @@ docs
 *.daidir
 
 simv_regs
+
+simv_reg_agent

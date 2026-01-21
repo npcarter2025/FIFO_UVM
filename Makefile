@@ -139,12 +139,46 @@ run_regs_waves: compile_regs
 	./simv_regs
 	@echo "Waveform saved to tb_fifo_regs.vcd"
 
+# ============================================================================
+# Phase 2: UVM Register Agent Test
+# ============================================================================
+
+# Register agent source files
+REG_AGENT_RTL = dut/fifo_regs.sv dut/fifo_core.sv dut/fifo_top.sv
+REG_AGENT_IF  = reg_agent/reg_if.sv
+REG_AGENT_PKG = reg_agent/reg_pkg.sv
+REG_AGENT_TB  = tb/tb_reg_agent.sv
+
+REG_AGENT_TEST ?= reg_sanity_test
+
+# VCS flags for UVM register agent test
+REG_VCS_FLAGS = -sverilog \
+                -debug_access+all \
+                -full64 \
+                -timescale=1ns/1ps \
+                -ntb_opts uvm-1.2 \
+                +incdir+$(UVM_HOME)/src \
+                +incdir+reg_agent
+
+# Compile UVM register agent test
+compile_reg_agent:
+	$(VCS) $(REG_VCS_FLAGS) $(REG_AGENT_RTL) $(REG_AGENT_IF) $(REG_AGENT_PKG) $(REG_AGENT_TB) -o simv_reg_agent
+
+# Run UVM register agent test
+run_reg_agent: compile_reg_agent
+	./simv_reg_agent +UVM_TESTNAME=$(REG_AGENT_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY)
+	@echo ""
+	@echo "============================================================"
+	@echo "Register agent test complete!"
+	@echo "============================================================"
+
 # Clean generated files
 clean:
 	rm -rf $(SIMV) $(SIMV).daidir csrc ucli.key vc_hdrs.h $(VCD)
 	rm -rf *.log *.fsdb cov.vdb simv.vdb AN.DB novas.*
 	rm -rf cov_report urgReport
 	rm -rf simv_regs simv_regs.daidir tb_fifo_regs.vcd
+	rm -rf simv_reg_agent simv_reg_agent.daidir tb_reg_agent.vcd
 
 # Clean everything including VCS work directories
 cleanall: clean
@@ -182,7 +216,11 @@ help:
 	@echo "  make compile_regs   - Compile register test only"
 	@echo "  make run_regs_waves - Run register test with VCD dump"
 	@echo ""
-	@echo "Variables:"
+	@echo "Phase 2 UVM Register Agent Test:"
+	@echo "  make run_reg_agent     - Compile and run UVM register agent test"
+	@echo "  make compile_reg_agent - Compile UVM register agent test only"
+	@echo ""
+	@echo "Variables:
 	@echo "  TEST=<name>       - Specify test name (default: fifo_test)"
 	@echo "  UVM_VERBOSITY=X   - Set verbosity (UVM_LOW/MEDIUM/HIGH/DEBUG)"
 	@echo ""
@@ -191,4 +229,4 @@ help:
 	@echo "  make run_regs  # Run Phase 1 register sanity test"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent

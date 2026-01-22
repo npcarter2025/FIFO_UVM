@@ -49,8 +49,20 @@ package fifo_ral_test_pkg;
     `include "seq/fifo_overflow_sequence.svh"
 
     //-------------------------------------------------------------------------
+    // Virtual Sequences (Phase 6)
+    //-------------------------------------------------------------------------
+    `include "seq/fifo_virtual_base_sequence.svh"
+    `include "seq/fifo_config_then_write_sequence.svh"
+    `include "seq/fifo_parallel_traffic_sequence.svh"
+
+    //-------------------------------------------------------------------------
     // RAL Tests
     //-------------------------------------------------------------------------
     `include "tests/fifo_ral_test.sv"
+
+    //-------------------------------------------------------------------------
+    // Virtual Sequence Tests (Phase 6)
+    //-------------------------------------------------------------------------
+    `include "tests/fifo_virtual_test.sv"
 
 endpackage

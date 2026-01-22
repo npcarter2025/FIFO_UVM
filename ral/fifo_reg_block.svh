@@ -24,7 +24,8 @@ class fifo_reg_block extends uvm_reg_block;
     uvm_reg_map reg_map;
 
     function new(string name = "fifo_reg_block");
-        super.new(name, UVM_NO_COVERAGE);
+        // 7.2: Enable all RAL coverage (field values, address hits, etc.)
+        super.new(name, build_coverage(UVM_CVR_ALL));
     endfunction
 
     virtual function void build();
@@ -57,6 +58,11 @@ class fifo_reg_block extends uvm_reg_block;
 
         // Lock the model - no more changes allowed
         lock_model();
+
+        // 7.2: Enable coverage sampling if coverage was built
+        if (has_coverage(UVM_CVR_ALL)) begin
+            set_coverage(UVM_CVR_ALL);
+        end
     endfunction
 
     //-------------------------------------------------------------------------

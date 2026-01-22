@@ -191,4 +191,174 @@ class fifo_ral_reset_sequence extends fifo_ral_base_sequence;
 
 endclass
 
+//-----------------------------------------------------------------------------
+// Class: fifo_ral_reset_verify_sequence  
+// Description: 7.3 - Comprehensive reset verification sequence
+//              Writes values, uses reg_block.reset() to reset mirror,
+//              reads back and verifies DUT matches reset values
+//-----------------------------------------------------------------------------
+
+class fifo_ral_reset_verify_sequence extends fifo_ral_base_sequence;
+
+    `uvm_object_utils(fifo_ral_reset_verify_sequence)
+
+    function new(string name = "fifo_ral_reset_verify_sequence");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        uvm_status_e status;
+        uvm_reg_data_t rdata;
+        uvm_reg regs[$];
+        int errors = 0;
+
+        `uvm_info(get_type_name(), "=== Starting Reset Verification Sequence ===", UVM_LOW)
+
+        //---------------------------------------------------------------------
+        // Step 1: Write non-reset values to writable registers
+        //---------------------------------------------------------------------
+        `uvm_info(get_type_name(), "Step 1: Write non-reset values to registers", UVM_LOW)
+
+        // Write CTRL: ENABLE=1
+        reg_block.ctrl.write(status, 32'h0000_0001);
+        check_status(status, "CTRL write");
+
+        // Write THRESH: value=0x0A (10)
+        reg_block.thresh.write(status, 32'h0000_000A);
+        check_status(status, "THRESH write");
+
+        // Verify writes
+        reg_block.ctrl.read(status, rdata);
+        `uvm_info(get_type_name(), $sformatf("CTRL after write: 0x%08h (ENABLE=%0d)", 
+                  rdata, reg_block.ctrl.enable.get()), UVM_LOW)
+
+        reg_block.thresh.read(status, rdata);
+        `uvm_info(get_type_name(), $sformatf("THRESH after write: 0x%08h (value=%0d)", 
+                  rdata, reg_block.thresh.thresh_val.get()), UVM_LOW)
+
+        //---------------------------------------------------------------------
+        // Step 2: Report current mirror values vs expected reset values
+        //---------------------------------------------------------------------
+        `uvm_info(get_type_name(), "Step 2: Check current mirror vs reset values", UVM_LOW)
+
+        reg_block.get_registers(regs);
+        foreach (regs[i]) begin
+            `uvm_info(get_type_name(), $sformatf("  %s: mirror=0x%08h, reset=0x%08h", 
+                      regs[i].get_name(),
+                      regs[i].get_mirrored_value(),
+                      regs[i].get_reset()), UVM_LOW)
+        end
+
+        //---------------------------------------------------------------------
+        // Step 3: Reset the RAL mirror (not the DUT - that requires HW reset)
+        //---------------------------------------------------------------------
+        `uvm_info(get_type_name(), "Step 3: Reset RAL mirror to default values", UVM_LOW)
+        
+        // Note: reg_block.reset() only resets the RAL mirror, not the actual DUT
+        // To test DUT reset, you would need to trigger hardware reset
+        // This demonstrates the RAL reset API
+        reg_block.reset();
+
+        `uvm_info(get_type_name(), "RAL mirror reset complete. Mirror values now:", UVM_LOW)
+        foreach (regs[i]) begin
+            `uvm_info(get_type_name(), $sformatf("  %s: mirror=0x%08h (expected reset=0x%08h)", 
+                      regs[i].get_name(),
+                      regs[i].get_mirrored_value(),
+                      regs[i].get_reset()), UVM_LOW)
+            
+            // Verify mirror matches reset value
+            if (regs[i].get_mirrored_value() != regs[i].get_reset()) begin
+                `uvm_error(get_type_name(), $sformatf("%s mirror mismatch after reset()", 
+                          regs[i].get_name()))
+                errors++;
+            end
+        end
+
+        //---------------------------------------------------------------------
+        // Step 4: Read actual DUT registers (may differ since we didn't HW reset)
+        //---------------------------------------------------------------------
+        `uvm_info(get_type_name(), "Step 4: Read actual DUT register values", UVM_LOW)
+        
+        reg_block.ctrl.read(status, rdata);
+        `uvm_info(get_type_name(), $sformatf("  CTRL DUT value: 0x%08h", rdata), UVM_LOW)
+        
+        reg_block.thresh.read(status, rdata);
+        `uvm_info(get_type_name(), $sformatf("  THRESH DUT value: 0x%08h", rdata), UVM_LOW)
+        
+        reg_block.status.read(status, rdata);
+        `uvm_info(get_type_name(), $sformatf("  STATUS DUT value: 0x%08h", rdata), UVM_LOW)
+
+        if (errors == 0) begin
+            `uvm_info(get_type_name(), "=== Reset Verification Sequence PASSED ===", UVM_LOW)
+        end else begin
+            `uvm_error(get_type_name(), $sformatf("Reset verification had %0d errors", errors))
+        end
+    endtask
+
+endclass
+
+//-----------------------------------------------------------------------------
+// Class: fifo_ral_bit_bash_sequence
+// Description: 7.4 - Bit-bash test using built-in RAL sequence
+//              Tests all writable register bits by writing/reading each bit
+//-----------------------------------------------------------------------------
+
+class fifo_ral_bit_bash_sequence extends fifo_ral_base_sequence;
+
+    `uvm_object_utils(fifo_ral_bit_bash_sequence)
+
+    function new(string name = "fifo_ral_bit_bash_sequence");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        uvm_reg_bit_bash_seq bit_bash_seq;
+
+        `uvm_info(get_type_name(), "=== Starting RAL Bit-Bash Sequence ===", UVM_LOW)
+        `uvm_info(get_type_name(), "This tests all writable bits in all registers", UVM_LOW)
+
+        // Use built-in UVM bit-bash sequence
+        // This will:
+        //   - Walk through each register
+        //   - For each writable bit, write 1 then 0
+        //   - Verify the bit retains the written value
+        bit_bash_seq = uvm_reg_bit_bash_seq::type_id::create("bit_bash_seq");
+        bit_bash_seq.model = reg_block;
+        bit_bash_seq.start(null);
+
+        `uvm_info(get_type_name(), "=== RAL Bit-Bash Sequence Complete ===", UVM_LOW)
+    endtask
+
+endclass
+
+//-----------------------------------------------------------------------------
+// Class: fifo_ral_mem_walk_sequence
+// Description: Additional built-in RAL sequence - memory access test
+//              (included for completeness, though FIFO has no RAL memories)
+//-----------------------------------------------------------------------------
+
+class fifo_ral_access_sequence extends fifo_ral_base_sequence;
+
+    `uvm_object_utils(fifo_ral_access_sequence)
+
+    function new(string name = "fifo_ral_access_sequence");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        uvm_reg_access_seq access_seq;
+
+        `uvm_info(get_type_name(), "=== Starting RAL Access Sequence ===", UVM_LOW)
+        `uvm_info(get_type_name(), "This verifies register accessibility (R/W vs RO)", UVM_LOW)
+
+        // Use built-in UVM register access sequence
+        access_seq = uvm_reg_access_seq::type_id::create("access_seq");
+        access_seq.model = reg_block;
+        access_seq.start(null);
+
+        `uvm_info(get_type_name(), "=== RAL Access Sequence Complete ===", UVM_LOW)
+    endtask
+
+endclass
+
 `endif

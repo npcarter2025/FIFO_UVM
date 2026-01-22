@@ -108,3 +108,78 @@ class fifo_ral_reset_test extends fifo_ral_base_test;
     endtask
 
 endclass
+
+//-----------------------------------------------------------------------------
+// 7.3: RAL Reset Verification Test
+// Demonstrates: reg_block.reset() and reset value verification
+//-----------------------------------------------------------------------------
+
+class fifo_ral_reset_verify_test extends fifo_ral_base_test;
+
+    `uvm_component_utils(fifo_ral_reset_verify_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    virtual task run_test_sequence();
+        fifo_ral_reset_verify_sequence seq;
+        
+        `uvm_info(get_type_name(), "Running RAL reset verification sequence", UVM_LOW)
+        
+        seq = fifo_ral_reset_verify_sequence::type_id::create("seq");
+        seq.reg_block = env.reg_block;
+        seq.start(null);
+    endtask
+
+endclass
+
+//-----------------------------------------------------------------------------
+// 7.4: RAL Bit-Bash Test
+// Uses built-in uvm_reg_bit_bash_seq to test all register bits
+//-----------------------------------------------------------------------------
+
+class fifo_ral_bit_bash_test extends fifo_ral_base_test;
+
+    `uvm_component_utils(fifo_ral_bit_bash_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    virtual task run_test_sequence();
+        fifo_ral_bit_bash_sequence seq;
+        
+        `uvm_info(get_type_name(), "Running RAL bit-bash sequence", UVM_LOW)
+        
+        seq = fifo_ral_bit_bash_sequence::type_id::create("seq");
+        seq.reg_block = env.reg_block;
+        seq.start(null);
+    endtask
+
+endclass
+
+//-----------------------------------------------------------------------------
+// RAL Access Test
+// Uses built-in uvm_reg_access_seq to verify register accessibility
+//-----------------------------------------------------------------------------
+
+class fifo_ral_access_test extends fifo_ral_base_test;
+
+    `uvm_component_utils(fifo_ral_access_test)
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+
+    virtual task run_test_sequence();
+        fifo_ral_access_sequence seq;
+        
+        `uvm_info(get_type_name(), "Running RAL access sequence", UVM_LOW)
+        
+        seq = fifo_ral_access_sequence::type_id::create("seq");
+        seq.reg_block = env.reg_block;
+        seq.start(null);
+    endtask
+
+endclass

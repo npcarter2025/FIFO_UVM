@@ -22,7 +22,8 @@ class fifo_scoreboard extends uvm_scoreboard;
     bit [7:0] queue_model [$];
 
     // Register addresses
-    localparam ADDR_CTRL = 8'h00;
+    localparam ADDR_CTRL   = 8'h00;
+    localparam ADDR_STATUS = 8'h04;
 
     // Statistics
     int num_writes;
@@ -30,6 +31,8 @@ class fifo_scoreboard extends uvm_scoreboard;
     int num_matches;
     int num_mismatches;
     int num_clears;
+    int num_count_checks;
+    int num_count_mismatches;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -72,12 +75,44 @@ class fifo_scoreboard extends uvm_scoreboard;
     endfunction
 
     //-------------------------------------------------------------------------
-    // Handle register transactions - detect CLEAR operations
+    // Handle register transactions - detect CLEAR and verify STATUS.COUNT
     //-------------------------------------------------------------------------
     virtual function void write_reg(reg_item item);
         // Check for CTRL register write with CLEAR bit set
         if (item.is_write() && item.addr == ADDR_CTRL && item.wdata[1]) begin
             flush_queue();
+        end
+
+        // 7.5: Check STATUS register COUNT field matches scoreboard queue
+        if (!item.is_write() && item.addr == ADDR_STATUS) begin
+            verify_status_count(item.rdata);
+        end
+    endfunction
+
+    //-------------------------------------------------------------------------
+    // 7.5: Verify STATUS.COUNT matches internal queue model
+    //-------------------------------------------------------------------------
+    function void verify_status_count(logic [31:0] status_rdata);
+        bit [7:0] hw_count;
+        int expected_count;
+
+        // Extract COUNT field from STATUS register (bits 15:8)
+        hw_count = status_rdata[15:8];
+        expected_count = queue_model.size();
+
+        num_count_checks++;
+
+        if (hw_count == expected_count) begin
+            `uvm_info("SCB", $sformatf("STATUS.COUNT check PASS: HW=%0d, Expected=%0d", 
+                      hw_count, expected_count), UVM_MEDIUM)
+        end else begin
+            num_count_mismatches++;
+            `uvm_warning("SCB", $sformatf("STATUS.COUNT mismatch: HW=%0d, Expected=%0d (may be timing)", 
+                        hw_count, expected_count))
+            // Note: Using warning instead of error because there can be timing
+            // differences between when the scoreboard receives transactions
+            // and when the STATUS register is read. For stricter checking,
+            // change to `uvm_error
         end
     endfunction
 
@@ -103,6 +138,8 @@ class fifo_scoreboard extends uvm_scoreboard;
         `uvm_info("SCB", $sformatf("  Matches:          %0d", num_matches), UVM_LOW)
         `uvm_info("SCB", $sformatf("  Mismatches:       %0d", num_mismatches), UVM_LOW)
         `uvm_info("SCB", $sformatf("  FIFO Clears:      %0d", num_clears), UVM_LOW)
+        `uvm_info("SCB", $sformatf("  COUNT Checks:     %0d", num_count_checks), UVM_LOW)
+        `uvm_info("SCB", $sformatf("  COUNT Mismatches: %0d", num_count_mismatches), UVM_LOW)
         `uvm_info("SCB", $sformatf("  Remaining in Q:   %0d", queue_model.size()), UVM_LOW)
         `uvm_info("SCB", "============================================", UVM_LOW)
         

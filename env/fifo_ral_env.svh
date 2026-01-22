@@ -28,6 +28,9 @@ class fifo_ral_env extends uvm_env;
     fifo_reg_block  reg_block;
     fifo_reg_adapter reg_adapter;
 
+    // RAL predictor (Phase 7) - updates mirror from monitor observations
+    uvm_reg_predictor #(reg_item) reg_predictor;
+
     // Virtual sequencer (Phase 5) - coordinates both agents
     fifo_virtual_sequencer  v_sqr;
 
@@ -62,6 +65,9 @@ class fifo_ral_env extends uvm_env;
         // Create virtual sequencer
         v_sqr = fifo_virtual_sequencer::type_id::create("v_sqr", this);
 
+        // 7.1: Create RAL predictor for monitor-based mirror updates
+        reg_predictor = uvm_reg_predictor #(reg_item)::type_id::create("reg_predictor", this);
+
     endfunction
 
     //-------------------------------------------------------------------------
@@ -81,8 +87,16 @@ class fifo_ral_env extends uvm_env;
         // This tells the RAL which sequencer and adapter to use for bus transactions
         reg_block.reg_map.set_sequencer(reg_agt.sqr, reg_adapter);
 
-        // Set auto-predict mode (update RAL mirror after each transaction)
-        reg_block.reg_map.set_auto_predict(1);
+        // 7.1: Use explicit predictor instead of auto_predict
+        // This provides more accurate mirroring by observing actual bus transactions
+        reg_block.reg_map.set_auto_predict(0);  // Disable auto-predict
+
+        // Configure and connect the predictor
+        reg_predictor.map     = reg_block.reg_map;
+        reg_predictor.adapter = reg_adapter;
+
+        // Connect monitor's analysis port to predictor's bus_in port
+        reg_agt.mon.item_collected_port.connect(reg_predictor.bus_in);
 
         // Connect virtual sequencer handles to agent sequencers
         v_sqr.fifo_sqr  = fifo_agt.sqr;

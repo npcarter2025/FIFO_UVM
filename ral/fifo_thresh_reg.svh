@@ -6,8 +6,10 @@
 // Description: RAL model for THRESH register (offset 0x08)
 //
 // Fields:
-//   [7:0]   THRESH_VAL - RW, almost-full threshold value
-//   [31:8]  Reserved
+//   [4:0]   THRESH_VAL - RW, almost-full threshold value (5 bits for DEPTH=16)
+//   [31:5]  Reserved
+//
+// Note: Hardware implements $clog2(DEPTH)+1 bits = 5 bits for DEPTH=16
 //-----------------------------------------------------------------------------
 
 class fifo_thresh_reg extends uvm_reg;
@@ -21,6 +23,9 @@ class fifo_thresh_reg extends uvm_reg;
     // Default threshold (DEPTH-1 = 15 for DEPTH=16)
     local int unsigned default_thresh = 15;
 
+    // Threshold field size: $clog2(DEPTH)+1 = 5 for DEPTH=16
+    local int unsigned thresh_size = 5;
+
     function new(string name = "fifo_thresh_reg");
         super.new(name, 32, UVM_NO_COVERAGE);
     endfunction
@@ -31,11 +36,12 @@ class fifo_thresh_reg extends uvm_reg;
     endfunction
 
     virtual function void build();
-        // THRESH_VAL field - bits 7:0
+        // THRESH_VAL field - bits 4:0 (5 bits for DEPTH=16)
+        // Matches hardware: logic [$clog2(DEPTH):0] reg_thresh
         thresh_val = uvm_reg_field::type_id::create("thresh_val");
         thresh_val.configure(
             .parent(this),
-            .size(8),
+            .size(thresh_size),
             .lsb_pos(0),
             .access("RW"),
             .volatile(0),
@@ -45,12 +51,12 @@ class fifo_thresh_reg extends uvm_reg;
             .individually_accessible(0)
         );
 
-        // Reserved field - bits 31:8
+        // Reserved field - bits 31:5
         reserved = uvm_reg_field::type_id::create("reserved");
         reserved.configure(
             .parent(this),
-            .size(24),
-            .lsb_pos(8),
+            .size(32 - thresh_size),
+            .lsb_pos(thresh_size),
             .access("RO"),
             .volatile(0),
             .reset(0),
@@ -60,9 +66,9 @@ class fifo_thresh_reg extends uvm_reg;
         );
     endfunction
 
-    // Constraint for valid threshold values
+    // Constraint for valid threshold values (0 to DEPTH=16)
     constraint thresh_valid_c {
-        thresh_val.value inside {[1:255]};
+        thresh_val.value inside {[1:16]};
     }
 
 endclass

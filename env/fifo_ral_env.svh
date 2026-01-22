@@ -74,6 +74,9 @@ class fifo_ral_env extends uvm_env;
         fifo_agt.mon.item_collected_port.connect(scb.item_collected_export);
         fifo_agt.mon.item_collected_port.connect(cov.analysis_export);
 
+        // Connect register agent monitor to scoreboard (for CLEAR detection)
+        reg_agt.mon.item_collected_port.connect(scb.reg_collected_export);
+
         // Connect RAL model to register agent
         // This tells the RAL which sequencer and adapter to use for bus transactions
         reg_block.reg_map.set_sequencer(reg_agt.sqr, reg_adapter);

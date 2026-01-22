@@ -24,7 +24,7 @@ verdiLog
 
 *.fsdb
 
-docs
+#docs
 
 *.daidir
 
@@ -34,3 +34,5 @@ simv_reg_agent
 
 simv_ral_check
 simv_ral_test
+simv_dpi_test
+

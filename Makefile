@@ -235,6 +235,65 @@ run_ral_test: compile_ral_test
 run_ral_reset: compile_ral_test
 	./simv_ral_test +UVM_TESTNAME=fifo_ral_reset_test +UVM_VERBOSITY=$(UVM_VERBOSITY)
 
+# ============================================================================
+# Phase 8: DPI-C Integration Test
+# ============================================================================
+
+# DPI-C source files
+DPI_C_SOURCES = dpi/fifo_model.c dpi/test_utils.c
+DPI_SV_PKG    = dpi/fifo_dpi_pkg.sv
+
+DPI_TEST ?= fifo_dpi_basic_test
+
+# VCS flags for DPI-C integration
+DPI_VCS_FLAGS = -sverilog \
+                -debug_access+all \
+                -full64 \
+                -timescale=1ns/1ps \
+                -ntb_opts uvm-1.2 \
+                +incdir+$(UVM_HOME)/src \
+                +incdir+. \
+                +incdir+reg_agent \
+                +incdir+ral \
+                +incdir+dpi
+
+# Compile DPI-C integration test
+compile_dpi:
+	$(VCS) $(DPI_VCS_FLAGS) \
+	       $(DPI_C_SOURCES) \
+	       $(RAL_INT_RTL) $(RAL_INT_IF) $(RAL_INT_PKG) \
+	       $(DPI_SV_PKG) $(RAL_INT_TB) \
+	       -o simv_dpi_test
+
+# Run DPI-C integration test
+run_dpi_test: compile_dpi
+	./simv_dpi_test +UVM_TESTNAME=$(DPI_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY)
+	@echo ""
+	@echo "============================================================"
+	@echo "DPI-C integration test complete!"
+	@echo "============================================================"
+
+# Run all DPI tests
+run_dpi_all: compile_dpi
+	@echo "============================================================"
+	@echo "Running DPI-C Basic Test..."
+	@echo "============================================================"
+	./simv_dpi_test +UVM_TESTNAME=fifo_dpi_basic_test +UVM_VERBOSITY=$(UVM_VERBOSITY) || true
+	@echo ""
+	@echo "============================================================"
+	@echo "Running DPI-C Pattern Test..."
+	@echo "============================================================"
+	./simv_dpi_test +UVM_TESTNAME=fifo_dpi_pattern_test +UVM_VERBOSITY=$(UVM_VERBOSITY) || true
+	@echo ""
+	@echo "============================================================"
+	@echo "Running DPI-C Full Test..."
+	@echo "============================================================"
+	./simv_dpi_test +UVM_TESTNAME=fifo_dpi_full_test +UVM_VERBOSITY=$(UVM_VERBOSITY) || true
+	@echo ""
+	@echo "============================================================"
+	@echo "All DPI-C tests complete!"
+	@echo "============================================================"
+
 # Clean generated files
 clean:
 	rm -rf $(SIMV) $(SIMV).daidir csrc ucli.key vc_hdrs.h $(VCD)
@@ -244,6 +303,7 @@ clean:
 	rm -rf simv_reg_agent simv_reg_agent.daidir tb_reg_agent.vcd
 	rm -rf simv_ral_check simv_ral_check.daidir
 	rm -rf simv_ral_test simv_ral_test.daidir tb_fifo_ral.vcd
+	rm -rf simv_dpi_test simv_dpi_test.daidir
 
 # Clean everything including VCS work directories
 cleanall: clean
@@ -293,6 +353,13 @@ help:
 	@echo "  make run_ral_reset     - Run RAL reset value test"
 	@echo "  make compile_ral_test  - Compile RAL integration test only"
 	@echo ""
+	@echo "Phase 8 DPI-C Integration Test:"
+	@echo "  make run_dpi_test      - Run DPI-C test (basic)"
+	@echo "  make run_dpi_all       - Run all DPI-C tests"
+	@echo "  make compile_dpi       - Compile DPI-C test only"
+	@echo "  DPI_TEST=<name>        - Specify DPI test name"
+	@echo "    Tests: fifo_dpi_basic_test, fifo_dpi_pattern_test, fifo_dpi_full_test"
+	@echo ""
 	@echo "Variables:
 	@echo "  TEST=<name>       - Specify test name (default: fifo_test)"
 	@echo "  UVM_VERBOSITY=X   - Set verbosity (UVM_LOW/MEDIUM/HIGH/DEBUG)"
@@ -302,4 +369,4 @@ help:
 	@echo "  make run_regs  # Run Phase 1 register sanity test"
 	@echo "============================================================"
 
-.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent compile_ral compile_ral_test run_ral_test run_ral_reset
+.PHONY: all compile run run_waves gui report cov_view clean cleanall help run_all html compile_regs run_regs run_regs_waves compile_reg_agent run_reg_agent compile_ral compile_ral_test run_ral_test run_ral_reset compile_dpi run_dpi_test run_dpi_all
